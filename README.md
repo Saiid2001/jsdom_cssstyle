@@ -1,4 +1,4 @@
-# CSSStyleDeclaration
+# CSSStyleDeclaration 
 
 A Node JS implementation of the CSS Object Model [CSSStyleDeclaration interface](https://www.w3.org/TR/cssom-1/#the-cssstyledeclaration-interface).
 
