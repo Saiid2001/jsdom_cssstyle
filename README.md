@@ -6,7 +6,7 @@ A Node JS implementation of the CSS Object Model [CSSStyleDeclaration interface]
 
 ---
 
-#### Background
+#### Background 
 
 This package is an extension of the CSSStyleDeclaration class in Nikita Vasilyev's [CSSOM](https://github.com/NV/CSSOM) with added support for CSS 2 & 3 properties. The primary use case is for testing browser code in a Node environment.
 
