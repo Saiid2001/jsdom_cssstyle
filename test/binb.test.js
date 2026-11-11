@@ -1,0 +1,126 @@
+"use strict";
+
+// What binb's renderer reads from this fork beyond upstream 4.6.0.
+
+const { describe, it } = require("node:test");
+const assert = require("node:assert/strict");
+const { CSSStyleDeclaration } = require("../lib/CSSStyleDeclaration");
+
+describe("-webkit- properties", () => {
+  it("implements -webkit-text-fill-color under both camel cases", () => {
+    const style = new CSSStyleDeclaration();
+    style.setProperty("-webkit-text-fill-color", "#ffffff66");
+
+    assert.equal(style.webkitTextFillColor, "rgba(255, 255, 255, 0.4)");
+    assert.equal(style.WebkitTextFillColor, "rgba(255, 255, 255, 0.4)");
+    assert.equal(style.cssText, "-webkit-text-fill-color: rgba(255, 255, 255, 0.4);");
+  });
+
+  it("keeps -webkit-line-clamp from cssText", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "-webkit-line-clamp: 20";
+
+    assert.equal(style.WebkitLineClamp, "20");
+    assert.equal(style.webkitLineClamp, "20");
+    assert.equal(style.getPropertyValue("-webkit-line-clamp"), "20");
+  });
+
+  it("keeps -webkit-transform", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "-webkit-transform: scale(2);";
+
+    assert.equal(style.WebkitTransform, "scale(2)");
+    assert.equal(style.webkitTransform, "scale(2)");
+    assert.equal(style.getPropertyValue("-webkit-transform"), "scale(2)");
+  });
+
+  it("keeps -webkit-text-stroke-width", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "-webkit-text-stroke-width: 0.5em;";
+
+    assert.equal(style.WebkitTextStrokeWidth, "0.5em");
+    assert.equal(style.webkitTextStrokeWidth, "0.5em");
+    assert.equal(style.getPropertyValue("-webkit-text-stroke-width"), "0.5em");
+  });
+
+  it("keeps the user agent stylesheet's logical margins", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "-webkit-margin-before: 1em; -webkit-margin-start: 40px;";
+
+    assert.equal(style.getPropertyValue("-webkit-margin-before"), "1em");
+    assert.equal(style.getPropertyValue("-webkit-margin-start"), "40px");
+  });
+
+  it("keeps the aliases upstream 4.6.0 dropped", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText =
+      "display: -webkit-box; -webkit-box-orient: vertical; -webkit-user-select: none; " +
+      "-webkit-appearance: none; -webkit-transition: opacity 1s;";
+
+    assert.equal(style.getPropertyValue("display"), "-webkit-box");
+    assert.equal(style.getPropertyValue("-webkit-box-orient"), "vertical");
+    assert.equal(style.webkitUserSelect, "none");
+    assert.equal(style.WebkitAppearance, "none");
+    assert.equal(style.getPropertyValue("-webkit-transition"), "opacity 1s");
+  });
+});
+
+describe("flex-flow", () => {
+  it("expands both components in either order", () => {
+    const style = new CSSStyleDeclaration();
+    style.flexFlow = "wrap column";
+
+    assert.equal(style.flexDirection, "column");
+    assert.equal(style.flexWrap, "wrap");
+    assert.equal(style.flexFlow, "column wrap");
+  });
+
+  it("resets an omitted component to its initial value", () => {
+    const style = new CSSStyleDeclaration();
+    style.flexWrap = "wrap";
+    style.flexFlow = "column";
+
+    assert.equal(style.flexDirection, "column");
+    assert.equal(style.flexWrap, "nowrap");
+  });
+
+  it("rejects what is not a direction or a wrap", () => {
+    const style = new CSSStyleDeclaration();
+    style.flexFlow = "row";
+    style.flexFlow = "row row";
+    style.flexFlow = "sideways";
+
+    assert.equal(style.flexDirection, "row");
+    assert.equal(style.flexFlow, "row nowrap");
+  });
+
+  it("lets a later longhand win through cssText", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "flex-flow: row wrap; flex-direction: column;";
+
+    assert.equal(style.flexDirection, "column");
+    assert.equal(style.flexWrap, "wrap");
+  });
+});
+
+describe("what the fork carried and 4.6.0 now does itself", () => {
+  it("expands one-value flex", () => {
+    const style = new CSSStyleDeclaration();
+    style.flex = "2";
+    assert.equal(style.flex, "2 1 0%");
+    style.flex = "100%";
+    assert.equal(style.flex, "1 1 100%");
+    assert.equal(style.flexGrow, "1");
+    style.flex = "auto";
+    assert.equal(style.flex, "1 1 auto");
+  });
+
+  it("takes auto for top, right, bottom and left", () => {
+    const style = new CSSStyleDeclaration();
+    for (const side of ["top", "right", "bottom", "left"]) {
+      style[side] = "10px";
+      style[side] = "auto";
+      assert.equal(style[side], "auto");
+    }
+  });
+});
