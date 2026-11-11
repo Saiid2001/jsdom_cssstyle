@@ -124,3 +124,48 @@ describe("what the fork carried and 4.6.0 now does itself", () => {
     }
   });
 });
+
+describe("a colour the resolver cannot take", () => {
+  it("drops that declaration instead of throwing out of setProperty", () => {
+    const colorPath = require.resolve("@asamuzakjp/css-color", {
+      paths: [require.resolve("../lib/parsers")]
+    });
+    require(colorPath);
+    const cached = require.cache[colorPath];
+    const original = cached.exports;
+    const parsersPath = require.resolve("../lib/parsers");
+    const ownModules = () =>
+      Object.keys(require.cache).filter((key) => key.includes("/jsdom_cssstyle/lib/"));
+
+    // The resolver throws on some values (getbootstrap.com's color-mix(), with
+    // its variables substituted); a stand-in that always throws reaches the
+    // same path.
+    cached.exports = {
+      ...original,
+      resolve: () => {
+        throw new TypeError("object null is not iterable");
+      }
+    };
+    for (const key of ownModules()) {
+      delete require.cache[key];
+    }
+
+    try {
+      const { parseColor } = require(parsersPath);
+      const { CSSStyleDeclaration: Fresh } = require("../lib/CSSStyleDeclaration");
+
+      assert.equal(parseColor("color-mix(in srgb, red 50%, blue)"), undefined);
+
+      const style = new Fresh();
+      style.setProperty("color", "color-mix(in srgb, red 50%, blue)");
+      assert.equal(style.color, "");
+      style.setProperty("width", "10px");
+      assert.equal(style.width, "10px");
+    } finally {
+      cached.exports = original;
+      for (const key of ownModules()) {
+        delete require.cache[key];
+      }
+    }
+  });
+});
