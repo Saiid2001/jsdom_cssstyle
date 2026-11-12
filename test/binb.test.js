@@ -169,3 +169,29 @@ describe("a colour the resolver cannot take", () => {
     }
   });
 });
+
+// https://drafts.csswg.org/css-display/#display-legacy-flex aliases, which
+// browsers parse as the unprefixed keyword: a page that writes only the
+// prefixed one is laid out as a flex container.
+describe("display", () => {
+  it("parses -webkit-flex as flex and -webkit-inline-flex as inline-flex", () => {
+    const style = new CSSStyleDeclaration();
+    style.display = "-webkit-flex";
+    assert.equal(style.display, "flex");
+
+    style.setProperty("display", "-WEBKIT-INLINE-FLEX");
+    assert.equal(style.display, "inline-flex");
+
+    style.cssText = "display: -webkit-flex";
+    assert.equal(style.getPropertyValue("display"), "flex");
+  });
+
+  it("keeps every other value as written", () => {
+    const style = new CSSStyleDeclaration();
+
+    for (const value of ["-webkit-box", "-webkit-inline-box", "block", "inline flow-root", "contents", "var(--d)"]) {
+      style.display = value;
+      assert.equal(style.display, value);
+    }
+  });
+});
