@@ -220,3 +220,15 @@ describe("background shorthand with a two-part position", () => {
     assert.equal(style.backgroundImage, "");
   });
 });
+
+// CSS Contain 3 §6.1 container query lengths, which were dropped as unknown
+// units: a declaration of one left the element without the property at all.
+describe("container query lengths", () => {
+  it("keeps cqw, cqh, cqi, cqb, cqmin and cqmax", () => {
+    for (const value of ["50cqw", "10cqh", "1.5cqi", "2cqb", "3cqmin", "4cqmax"]) {
+      const style = new CSSStyleDeclaration();
+      style.width = value;
+      assert.equal(style.width, value);
+    }
+  });
+});
