@@ -271,8 +271,7 @@ describe("background", () => {
     testShorthandPropertyValue("background", "none", "none");
   });
 
-  // FIXME: fix background shorthand handler
-  it.skip("background shorthand should set / get sub longhand value", () => {
+  it("background shorthand should set / get sub longhand value", () => {
     testShorthandPropertyValue(
       "background",
       "fixed left center repeat url(example.png) green",

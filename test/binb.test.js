@@ -195,3 +195,28 @@ describe("display", () => {
     }
   });
 });
+
+describe("background shorthand with a two-part position", () => {
+  for (const [value, image, position, repeat] of [
+    ["url(/i.png) center center no-repeat", 'url("/i.png")', "center center", "no-repeat"],
+    ["#fff url(/i.png) no-repeat 0 0", 'url("/i.png")', "0px 0px", "no-repeat"],
+    ["url(/i.png) left top repeat-x", 'url("/i.png")', "left top", "repeat-x"],
+    ["url(/i.png) no-repeat 10px -20px", 'url("/i.png")', "10px -20px", "no-repeat"]
+  ]) {
+    it(`keeps background: ${value}`, () => {
+      const style = new CSSStyleDeclaration();
+      style.cssText = `background: ${value}`;
+
+      assert.equal(style.backgroundImage, image);
+      assert.equal(style.backgroundPosition, position);
+      assert.equal(style.backgroundRepeat, repeat);
+    });
+  }
+
+  it("still refuses position parts that are not adjacent", () => {
+    const style = new CSSStyleDeclaration();
+    style.cssText = "background: url(/i.png) left no-repeat top";
+
+    assert.equal(style.backgroundImage, "");
+  });
+});
