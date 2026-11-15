@@ -232,3 +232,74 @@ describe("container query lengths", () => {
     }
   });
 });
+
+// usc.edu sets `calc(100vh - 86px` -- its closing parenthesis forgotten -- from
+// jQuery's .css(). CSS closes a block left open at the end of a value, so
+// Chrome reads it as `calc(100vh - 86px)`; here it threw out of the page's own
+// style assignment, which a browser never does, and the throw ended the loop
+// that attaches the site's every component. binb C-287.
+describe("calc() left open at the end of a value", () => {
+  it("is closed, as CSS closes it", () => {
+    const style = new CSSStyleDeclaration();
+    style.height = "calc(100vh - 86px";
+
+    assert.equal(style.height, "calc(100vh - 86px)");
+  });
+
+  it("is closed however deep it was left open", () => {
+    const style = new CSSStyleDeclaration();
+    style.height = "calc(100vh - (86px + 2vh";
+
+    assert.equal(style.height, "calc(100vh - (86px + 2vh))");
+  });
+
+  it("is closed through setProperty too", () => {
+    const style = new CSSStyleDeclaration();
+    style.setProperty("width", "calc(50vw - 10px");
+
+    assert.equal(style.width, "calc(50vw - 10px)");
+  });
+});
+
+describe("a calc() the reader cannot take", () => {
+  it("drops that declaration instead of throwing out of the page's assignment", () => {
+    const colorPath = require.resolve("@asamuzakjp/css-color", {
+      paths: [require.resolve("../lib/parsers")]
+    });
+    require(colorPath);
+    const cached = require.cache[colorPath];
+    const original = cached.exports;
+    const parsersPath = require.resolve("../lib/parsers");
+    const ownModules = () =>
+      Object.keys(require.cache).filter((key) => key.includes("/jsdom_cssstyle/lib/"));
+
+    cached.exports = {
+      ...original,
+      utils: {
+        ...original.utils,
+        cssCalc: () => {
+          throw new Error("Unexpected token 86px.");
+        }
+      }
+    };
+    for (const key of ownModules()) {
+      delete require.cache[key];
+    }
+
+    try {
+      const { CSSStyleDeclaration: Fresh } = require("../lib/CSSStyleDeclaration");
+      const style = new Fresh();
+      style.height = "10px";
+
+      assert.doesNotThrow(() => { style.height = "calc(100vh - 86px)"; });
+      assert.equal(style.height, "10px");
+      assert.doesNotThrow(() => style.setProperty("width", "calc(1px + 2px)"));
+      assert.equal(style.width, "");
+    } finally {
+      cached.exports = original;
+      for (const key of ownModules()) {
+        delete require.cache[key];
+      }
+    }
+  });
+});
