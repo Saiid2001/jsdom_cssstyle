@@ -186,13 +186,48 @@ describe("display", () => {
     assert.equal(style.getPropertyValue("display"), "flex");
   });
 
-  it("keeps every other value as written", () => {
+  it("keeps every other valid value as written", () => {
     const style = new CSSStyleDeclaration();
 
-    for (const value of ["-webkit-box", "-webkit-inline-box", "block", "inline flow-root", "contents", "var(--d)"]) {
+    for (const value of [
+      "-webkit-box",
+      "-webkit-inline-box",
+      "block",
+      "inline flow-root",
+      "flex inline",
+      "contents",
+      "list-item",
+      "inline list-item flow-root",
+      "table-cell",
+      "inherit",
+      "var(--d)"
+    ]) {
       style.display = value;
       assert.equal(style.display, value);
     }
+  });
+
+  // A page writes `display: flex; display: -ms-flexbox` for old browsers; Chrome
+  // drops the value it does not know and keeps the flex before it.
+  it("ignores a value that is not a display", () => {
+    const style = new CSSStyleDeclaration();
+    style.display = "flex";
+
+    for (const value of [
+      "-ms-flexbox",
+      "-moz-box",
+      "box",
+      "block block",
+      "flex grid",
+      "list-item table",
+      "flex 1"
+    ]) {
+      style.display = value;
+      assert.equal(style.display, "flex", value);
+    }
+
+    style.cssText = "display: flex; display: -ms-flexbox";
+    assert.equal(style.display, "flex");
   });
 });
 
